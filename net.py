@@ -9,8 +9,8 @@ class Net(nn.Module):
     net_layer: list with the number of neurons for each network layer, [n_imput, ..., n_output]
     '''
     def __init__(self, 
-                 layers_size, 
-                 out_size,
+                 layers_size= [10000, 512, 256, 64], 
+                 out_size = 29,
                  params_list= None):
         
         super(Net, self).__init__()

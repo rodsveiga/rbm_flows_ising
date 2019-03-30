@@ -4,6 +4,7 @@ from tensorboardX import SummaryWriter
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+torch.manual_seed(12)
 import time
 
 
@@ -23,8 +24,8 @@ class RBM(nn.Module):
      '''
     
     def __init__(self, 
-                 num_visible= 16,
-                 num_hidden= 4, 
+                 num_visible= 100*100,
+                 num_hidden= 100*100, 
                  W= None, 
                  v_bias= None, 
                  h_bias= None,
@@ -32,7 +33,7 @@ class RBM(nn.Module):
                  T= 1.0,
                  use_cuda= False):
         
-        super(TRBM, self).__init__()
+        super(RBM, self).__init__()
         self.num_visible = num_visible
         self.num_hidden  = num_hidden
         self.W = W
@@ -172,12 +173,13 @@ class RBM(nn.Module):
     
     def learn(self,
               training_set, 
-              lr, 
-              nb_epoch,
-              batch_size, 
-              k_learning, 
+              lr= 0.001, 
+              nb_epoch= 1000,
+              batch_size= 100, 
+              k_learning= 1, 
               test_set= None,
               k_sampling= None,
+              FE_dif= None,
               verbose= 1,
               tensorboard= False):
         
@@ -188,18 +190,19 @@ class RBM(nn.Module):
         
         if tensorboard:
             ### TensorBoardX - Initialization
-            file_path = 'runs/RBM_25000_nv%d_nh%d_lr%.1E_k%d_bsize%d_epochs%d' % (self.num_visible,
-                                                                                  self.num_hidden,
-                                                                                  lr,
-                                                                                  k_learning,
-                                                                                  batch_size,
-                                                                                  nb_epoch)
+            file_path = 'runs/RBM_nv%d_nh%d_lr%.1E_k%d_bsize%d' % (self.num_visible,
+                                                                   self.num_hidden,
+                                                                   lr,
+                                                                   k_learning,
+                                                                   batch_size)
+                                                                                 
             self.writer = SummaryWriter(log_dir= file_path)
             W_epoch, v_bias_epoch, h_bias_epoch = self.parameters()
             epoch = 0
             self.writer.add_histogram('W histogram', W_epoch, epoch)
-            self.writer.add_histogram('v_bias histogram', v_bias_epoch, epoch)
-            self.writer.add_histogram('h_bias histogram', h_bias_epoch, epoch)
+            if self.bias:
+                self.writer.add_histogram('v_bias histogram', v_bias_epoch, epoch)
+                self.writer.add_histogram('h_bias histogram', h_bias_epoch, epoch)
         
         
         # Print statement just to check the parameters
@@ -216,17 +219,26 @@ class RBM(nn.Module):
         loss_ = []
         free_en_dif_ = []
         loss_test = []
-        free_en_dif_test_ = []     
+        #free_en_dif_test_ = [] 
+        pseudo_lik_ = []
         t0 = time.time()
         t0_all = time.time()
+        ep_list_verb = []
+        
+        if test_set is not None:
+            train_subset = training_set[torch.randperm(test_set.size()[0])]
                      
         for epoch in range(1, nb_epoch + 1):
+            
+            self.epoch_final = epoch
                   
             train_loss = 0
             test_loss = 0
             s = 0.
-            free_en_dif = 0.
-            free_en_dif_test = 0
+            pseudo_lik = 0.
+            #free_en_dif = 0.
+            #free_en_dif_ = []
+            fe_dif_ = []
             
             for j in range(0, training_set.size()[0], batch_size):
                 
@@ -247,73 +259,127 @@ class RBM(nn.Module):
                 
                 if epoch%verbose == 0:
                                      
-                    # Free energy difference within training set 
-                    free_energy_v0 = self.free_energy(v0)
-                    free_energy_vk = self.free_energy(vk)
-                    free_en_dif += torch.mean(free_energy_v0 - free_energy_vk)
-                
-                    train_loss += torch.mean( (v0 - vk)**2 )
+                    # Free energy v0
+                    fe = self.free_energy(v0)
+                                       
+                    # Reconstruction error
+                    train_loss += torch.mean( (v0 - vk)**2 ).item()
+                    
+                    # Pseudo-likelihood
+                    rand_flip = (np.arange(v0.shape[0]), 
+                                 np.random.randint(0, v0.shape[1], v0.shape[0]))
+                    
+                    v_ = v0.clone()
+                    v_[rand_flip] = 1 - v_[rand_flip]
+                    
+                    fe_ = self.free_energy(v_)
+                    
+                    pseudo_lik += v0.shape[1] * np.log( self.sigmoid( torch.mean(fe_ - fe) ).item() )
                     
                 s += 1.
                 
             if epoch%verbose == 0:
                 # List storing the quantities which monitor training
-                loss_.append((train_loss/s).item())
-                free_en_dif_.append((free_en_dif/s).item())
-                                      
+                loss_.append(train_loss / s )
+                pseudo_lik_.append(pseudo_lik / s)
+                # Epoch sequence according to verbose
+                ep_list_verb.append(epoch)
+                
                 # Free energy difference and Reconstruction error in the Test Set
                 if test_set is not None:
+                    # Reconstruction error in the Test Set
                     vk_test = self.sampling(k_sampling= k_sampling, v0= test_set)
                     test_loss = torch.mean( (test_set - vk_test)**2 ).item()
                     loss_test.append(test_loss)
-                
-                    free_energy_v0 = self.free_energy(test_set)
-                    free_energy_vk = self.free_energy(vk_test)
-                    free_en_dif_test = torch.mean(free_energy_v0 - free_energy_vk).item()               
-                    free_en_dif_test_.append(free_en_dif_test)
-                 
-                # Monitoring training each 10 epochs
-                t1 = time.time()
-                print('Epoch %d, Rec er: %.6f (train), %.6f (test), FE df: %f (train), %f (test), Time: %f' %(epoch,
-                                                                                                              (train_loss/s).item(),
-                                                                                                              test_loss,
-                                                                                                              (free_en_dif/s).item(),
-                                                                                                              free_en_dif_test,
-                                                                                                              t1 - t0))            
+                    
+                    # Free energy difference between test and training set (Hinton)
+                    '''
+                    After every few epochs, compute the average free energy of a representative subset of 
+                    the training data and compare it with the average free energy of a validation set. Always use 
+                    the same subset of the training data (from Hinton tutorial)
+                    '''
+                    fe_valid = self.free_energy(test_set)
+                    fe_train = self.free_energy(train_subset)
+                    
+                    fe_dif = torch.mean(fe_valid).item() - torch.mean(fe_train).item()
+                                       
+                    fe_dif_.append(fe_dif)
+                    
+                    if FE_dif:
+                        
+                        fe_valid = self.free_energy(test_set)
+                        fe_train = self.free_energy(train_subset)
+                    
+                        fe_dif = torch.mean(fe_valid).item() - torch.mean(fe_train).item()
+                        fe_dif_.append(fe_dif)
+                    
+                        t1 = time.time()
+                        print('Ep %d, Rec er: %.6f (train), %.6f (test), Pseud_Lik: %.6f, FE_dif: %.6f, Time: %f, ' %(epoch,
+                                                                                                                      train_loss/s,
+                                                                                                                      test_loss,
+                                                                                                                      pseudo_lik / s,
+                                                                                                                      fe_dif,
+                                                                                                                      t1 - t0))
+                    else:
+                        t1 = time.time()
+                        print('Ep %d, Rec er: %.6f (train), %.6f (test), Pseud_Lik: %.6f, Time: %f, ' %(epoch,
+                                                                                                        train_loss/s,
+                                                                                                        test_loss,
+                                                                                                        pseudo_lik / s, 
+                                                                                                        t1 - t0))
+                        
+                else:                                          
+                    t1 = time.time()
+                    print('Ep %d, Rec er: %.6f (train), Pseud_Lik: %.6f, Time: %f ' %(epoch,
+                                                                                      train_loss/s,
+                                                                                      pseudo_lik / s, 
+                                                                                      t1 - t0))
+                          
                 t0 = t1
                 
                 if tensorboard:
                     W_epoch, v_bias_epoch, h_bias_epoch = self.parameters()
                     self.writer.add_histogram('W histogram', W_epoch, epoch)
-                    self.writer.add_histogram('v_bias histogram', v_bias_epoch, epoch)
-                    self.writer.add_histogram('h_bias histogram', h_bias_epoch, epoch)
-                    self.writer.add_scalar('runs/loss_train', (train_loss/s).item(), epoch)
-                    self.writer.add_scalar('runs/loss_test', test_loss, epoch)
-                    self.writer.add_scalar('runs/fe_train', free_en_dif_test, epoch)
-                    self.writer.add_scalar('runs/fe_test', free_en_dif_test, epoch)
+                    if self.bias:
+                        self.writer.add_histogram('v_bias histogram', v_bias_epoch, epoch)
+                        self.writer.add_histogram('h_bias histogram', h_bias_epoch, epoch)
                                                             
         t1_all = time.time()
         print('Total training time = %.3f' % (t1_all - t0_all))
  
-        # Plots after training to check the evolution of Free Energy Difference and Reconstruction Error
-        plt.plot(loss_, label= 'Training set')
+        ### Plots after training
+        
+        # Reconstruction error
+        plt.plot(ep_list_verb, loss_, marker= '.', label= 'Training set')
         if test_set is not None:
-            plt.plot(loss_test, label= 'Test set')
+            plt.plot(ep_list_verb, loss_test, marker= '.', label= 'Test set')
         plt.xlabel('Epoch', fontsize= 15)
         plt.ylabel('Reconstruction Error', fontsize= 15)
-        plt.title('$N_h$ = %d' % self.num_hidden, fontsize= 15)
-        plt.legend()
+        plt.legend(fontsize= 12)
         plt.show()
         
-        plt.plot(free_en_dif_, label= 'Training set')
-        if test_set is not None:
-            plt.plot(free_en_dif_test_, label= 'Test set' )
+        # Pseudo_Log_likelihood
+        plt.plot(ep_list_verb, pseudo_lik_, marker= '.')
         plt.xlabel('Epoch', fontsize= 15)
-        plt.ylabel('Free Energy Difference', fontsize= 15)
-        plt.title('$N_h$ = %d' % self.num_hidden, fontsize= 15)
-        plt.legend()
+        plt.ylabel('PseudoLogLikelihood', fontsize= 15)
         plt.show()
         
+               
+        if test_set is not None:
+            
+            if FE_dif:
+                
+                plt.plot(ep_list_verb, free_en_dif_, marker= '.', label= '$FE_{test} - FE_{\train}$')
+                plt.xlabel('Epoch', fontsize= 15)
+                plt.ylabel('Free Energy Gap', fontsize= 15)
+                plt.legend(fontsize= 12)
+                plt.show()
+       
+        
+        
+        
+    def num_train_epochs(self):
+        return self.epoch_final
       
 
     
@@ -354,23 +420,7 @@ class RBM(nn.Module):
             RBM_flux.append(vk)
 
         return RBM_flux    
-    
-    
-    
-    
-    def flow_last(self, n_it_flow, vk= None):
-        # Similar to the method flow, but returns just the last flow     
-        if vk is None:
-            vk = torch.Tensor(np.random.randint(0, 2, size= (1000, self.num_visible)))
-                         
-                         
-        for k in range(n_it_flow):
-            
-            _, hk = self.v_to_h(vk)
-            _, vk = self.h_to_v(hk)
-            
-        return vk
-    
+  
     
     
     
@@ -383,3 +433,8 @@ class RBM(nn.Module):
         va = torch.mv(v, self.v_bias)
                         
         return - va - torch.log(1 + torch.exp(x)).sum(dim=1)
+    
+    
+    
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
