@@ -180,18 +180,21 @@ class IsingMC():
             spin_MC = pd.DataFrame(self.spin_MC_df)
         
         if Tc_scaled:
-            spin_MC['temp'] = spin_MC['temp'] / self.T_c
+            spin_MC['temp_'] = spin_MC['temp'] / self.T_c
+            
+        else:
+            spin_MC['temp_'] = spin_MC['temp'] 
                
-        expec_val_per_spin_ENERGY = spin_MC['energy'].groupby(spin_MC['temp']).mean() / self.N_spins
+        expec_val_per_spin_ENERGY = spin_MC['energy'].groupby(spin_MC['temp_']).mean() / self.N_spins
         
-        expec_val_per_spin_MAGN = abs(spin_MC['magn']).groupby(spin_MC['temp']).mean() / self.N_spins
+        expec_val_per_spin_MAGN = abs(spin_MC['magn']).groupby(spin_MC['temp_']).mean() / self.N_spins
                    
-        expec_val_ENERGY_square = (spin_MC['energy']**2).groupby(spin_MC['temp']).mean()
+        expec_val_ENERGY_square = (spin_MC['energy']**2).groupby(spin_MC['temp_']).mean()
         temp_array = np.array(expec_val_ENERGY_square.index, dtype = np.float64)
         expec_val_ENERGY = self.N_spins*expec_val_per_spin_ENERGY
         specific_heat_per_spin = (expec_val_ENERGY_square  - expec_val_ENERGY**2) / (self.N_spins * (temp_array**2))
         
-        expec_val_MAGN_square = (spin_MC['magn']**2).groupby(spin_MC['temp']).mean()
+        expec_val_MAGN_square = (spin_MC['magn']**2).groupby(spin_MC['temp_']).mean()
         expec_val_MAGN  = self.N_spins*expec_val_per_spin_MAGN 
         mag_suscep_per_spin = (expec_val_MAGN_square  - expec_val_MAGN**2) / (self.N_spins * temp_array)
         
