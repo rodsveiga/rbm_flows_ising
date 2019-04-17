@@ -16,7 +16,8 @@ class IsingMC():
                  MC_eq_sweeps= 200, 
                  MC_states_per_T= 1000, 
                  MC_sweeps_per_state= 100, 
-                 include_Tc= True):
+                 include_Tc= True,
+                 Tc_MF= True):
         
         ##### 
         T_list_aux = np.linspace(T_max, T_min, num_T)
@@ -27,7 +28,12 @@ class IsingMC():
         T_c = 2*2.0
         
         if include_Tc:
-            T_list_aux = np.append(T_list_aux, [T_c - 0.01, T_c, T_c + 0.01])
+            if Tc_MF:
+                T_c_fit = 2*2.0
+            else:
+                T_c_fit =  2 / ( np.log(1 + np.sqrt(2)) )
+                
+            T_list_aux = np.append(T_list_aux, [T_c_fit - 0.01, T_c_fit, T_c_fit + 0.01])
             T_list_aux = np.sort(T_list_aux)[::-1]
         
         print('Method fit will construct states to the following temperatures: ')

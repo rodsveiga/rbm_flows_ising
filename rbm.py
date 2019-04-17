@@ -274,7 +274,7 @@ class RBM(nn.Module):
                     
                     fe_ = self.free_energy(v_)
                     
-                    pseudo_lik += v0.shape[1] * np.log( self.sigmoid( torch.mean(fe_ - fe) ).item() )
+                    pseudo_lik += v0.shape[1] * torch.log( self.sigmoid( torch.mean(fe_ - fe) ) ).item()
                     
                 s += 1.
                 
@@ -437,4 +437,4 @@ class RBM(nn.Module):
     
     
     def sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
+        return 1 / (1 + torch.exp(-x))
