@@ -21,8 +21,8 @@ visualization during Restricted Boltzmann Machine (RBM) training, it is necessar
 
 The main discussion and the flows are presented in the notebooks:
 
-- `main_discussion_L010.ipynb` - Ising square lattice $L\timesL$ wiht $L=10$.
-- `main_discussion_L100.ipynb` - Ising square lattice $L\timesL$ wiht $L=100$.
+- `main_discussion_L010.ipynb`.
+- `main_discussion_L100.ipynb`.
 
 Folders with data and saved trained models:
 
@@ -33,7 +33,7 @@ Folders with data and saved trained models:
 - `runs`: tensorboardX files if you choose `tensorboard= True` on `rbm.py`.
 - `figures`: saved plots.
 
-The classes for MC sampling, NN thermometer and the RBM are presented in the folder `modules`:
+The classes for the MC sampling, the NN thermometer and the RBM are presented in the folder `modules`:
 
 - `mc_ising2d.py` 
 - `mc_ising2d_MF.py`
@@ -43,4 +43,4 @@ The classes for MC sampling, NN thermometer and the RBM are presented in the fol
 NN and RBM training in the folders:
 
 - `training_NN_thermometer`
-- `training_RBM_thermometer`
+- `training_RBM`
