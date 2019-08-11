@@ -44,3 +44,7 @@ NN and RBM training in the folders:
 
 - `training_NN_thermometer`
 - `training_RBM`
+
+## License
+
+See [LICENSE](https://github.com/rodsveiga/rbm_flows_ising/blob/master/LICENSE).
