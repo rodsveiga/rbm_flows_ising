@@ -190,11 +190,11 @@ class RBM(nn.Module):
         
         if tensorboard:
             ### TensorBoardX - Initialization
-            file_path = 'runs/RBM_nv%d_nh%d_lr%.1E_k%d_bsize%d' % (self.num_visible,
-                                                                   self.num_hidden,
-                                                                   lr,
-                                                                   k_learning,
-                                                                   batch_size)
+            file_path = '../runs/RBM_nv%d_nh%d_lr%.1E_k%d_bsize%d' % (self.num_visible,
+                                                                     self.num_hidden,
+                                                                     lr,
+                                                                     k_learning,
+                                                                     batch_size)
                                                                                  
             self.writer = SummaryWriter(log_dir= file_path)
             W_epoch, v_bias_epoch, h_bias_epoch = self.parameters()
