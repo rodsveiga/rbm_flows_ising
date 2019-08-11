@@ -30,7 +30,7 @@ Folders with data and saved trained models:
 - `NN_trained_models`: trained neural network (NN) thermometers.
 - `RBM_trained_models`: trained RBMs.
 - `RBM_flows`: RBM flows. 
-- `runs`: tensorboardX files if you choose `tensorboard= True` on `rbm.py`.
+- `runs`: tensorboardX files if you choose `tensorboard=True` on `rbm.py`.
 - `figures`: saved plots.
 
 The classes for the MC sampling, the NN thermometer and the RBM are presented in the folder `modules`:
@@ -38,7 +38,7 @@ The classes for the MC sampling, the NN thermometer and the RBM are presented in
 - `mc_ising2d.py` 
 - `mc_ising2d_MF.py`
 - `net.py` 
-- `rbm.py` (for GPU computation: `use_cuda= True`)
+- `rbm.py` (for GPU computation: `use_cuda=True`)
 
 NN and RBM training in the folders:
 
