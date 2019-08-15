@@ -2,7 +2,7 @@
 
 ## Description
 
-Code for *Restricted Boltzmann Machine Flows and The Critical Temperature of Ising models* (under review).
+Code for *Restricted Boltzmann Machine Flows and The Critical Temperature of Ising models* (Under review).
 
 ## Prerequisites
 - [python](https://www.python.org/) >= 3.6
@@ -48,3 +48,10 @@ NN and RBM training in the folders:
 ## License
 
 See [LICENSE](https://github.com/rodsveiga/rbm_flows_ising/blob/master/LICENSE).
+
+## References
+
+- Scale-invariant feature extraction of neural network and renormalization group flow, [Phys. Rev. E 97, 053304 (2018)](https://journals.aps.org/pre/abstract/10.1103/PhysRevE.97.053304).
+- An exact mapping between the Variational Renormalization Group and Deep Learning, [arXiv:1410.3831](https://arxiv.org/abs/1410.3831).
+- Deep learning and the renormalization group, [arXiv:1301.3124](https://arxiv.org/abs/1301.3124).
+- A high-bias, low-variance introduction to machine learning for physicists, [Physics Reports](https://www.sciencedirect.com/science/article/pii/S0370157319300766?via%3Dihub).
