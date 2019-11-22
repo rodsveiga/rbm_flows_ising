@@ -24,14 +24,24 @@ The main discussion and the flows are presented in the notebooks:
 - `main_discussion_L010.ipynb`.
 - `main_discussion_L100.ipynb`.
 
+Further analysis about learned weight matrices:
+
+- `weight_analysis_L010.ipynb`.
+- `weight_analysis_L036.ipynb`.
+- `weight_analysis_L048.ipynb`.
+- `weight_analysis_L100.ipynb`.
+- `weight_analysis_comparing_L.ipynb`.
+
+
 Folders with data and saved trained models:
 
 - `data`: Monte Carlo (MC) samples for the Ising model in a square lattice.
 - `NN_trained_models`: trained neural network (NN) thermometers.
 - `RBM_trained_models`: trained RBMs.
-- `RBM_flows`: RBM flows. 
+- `RBM_flows`: RBM flows.
 - `runs`: tensorboardX files if you choose `tensorboard=True` on `rbm.py`.
 - `figures`: saved plots.
+- `weight_analysis`: singular value and eigenvalue decompositions.
 
 The classes for the MC sampling, the NN thermometer and the RBM are presented in the folder `modules`:
 
