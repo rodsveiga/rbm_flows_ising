@@ -2,7 +2,9 @@
 
 ## Description
 
-Code for *Restricted Boltzmann Machine Flows and The Critical Temperature of Ising models* (Under review).
+Code for *Restricted Boltzmann Machine Flows and The Critical Temperature of Ising models*.
+
+Paper link: [arXiv:2006.10176](https://arxiv.org/abs/2006.10176)
 
 ## Prerequisites
 - [python](https://www.python.org/) >= 3.6
